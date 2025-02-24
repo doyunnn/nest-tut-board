@@ -1,6 +1,10 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common'
 import { BoardsService } from './boards.service'
 import { CreateBoardDto } from './dto/create-board.dto'
+import { BoardStatusValidationPipe } from './pipes/board-status-validation.pipe'
+import { AuthGuard } from '@nestjs/passport'
+import { CurrentUser } from '../common/decorators/user.decorators'
+import { User } from '../auth/user.entity'
 
 @Controller('boards')
 export class BoardsController {
@@ -11,23 +15,31 @@ export class BoardsController {
     return this.boardsService.getAllBoards()
   }
 
+  @Get('/user/:id')
+  @UseGuards(AuthGuard())
+  async getUserAllBoards(@Param('id') id: string) {
+    return this.boardsService.getUserAllBoards(id)
+  }
+
   @Get(':id')
   async getBoard(@Param('id') id: string) {
     return this.boardsService.getBoard(id)
   }
 
   @Post()
-  async createBoard(@Body() createBoardDto: CreateBoardDto) {
-    return this.boardsService.createBoard(createBoardDto)
+  @UseGuards(AuthGuard())
+  async createBoard(@Body() createBoardDto: CreateBoardDto, @CurrentUser() user: User) {
+    return this.boardsService.createBoard(createBoardDto, user)
   }
 
   @Put(':id')
-  async updateBoard(@Param('id') id: string, @Body() createBoardDto: CreateBoardDto) {
+  async updateBoard(@Param('id', BoardStatusValidationPipe) id: string, @Body() createBoardDto: CreateBoardDto) {
     return this.boardsService.updateBoard(id, createBoardDto)
   }
 
   @Delete(':id')
-  async deleteBoard(@Param('id') id: string) {
-    return this.boardsService.deleteBoard(id)
+  @UseGuards(AuthGuard())
+  async deleteBoard(@Param('id') id: string, @CurrentUser() user: User) {
+    return this.boardsService.deleteBoard(id, user)
   }
 }

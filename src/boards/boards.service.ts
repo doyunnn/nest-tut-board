@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { Board } from './boards.entity'
 import { Repository } from 'typeorm'
 import { CreateBoardDto } from './dto/create-board.dto'
+import { User } from '../auth/user.entity'
 
 @Injectable()
 export class BoardsService {
@@ -10,6 +11,10 @@ export class BoardsService {
 
   async getAllBoards() {
     return this.boardRepository.find({ order: { id: 'ASC' } })
+  }
+
+  async getUserAllBoards(id: string) {
+    return this.boardRepository.find({ where: { user: { id } }, order: { id: 'ASC' } })
   }
 
   async getBoard(id: string) {
@@ -20,9 +25,11 @@ export class BoardsService {
     return board
   }
 
-  async createBoard(createBoardDto: CreateBoardDto) {
-    const board = this.boardRepository.create({ ...createBoardDto })
-    return this.boardRepository.save(board)
+  async createBoard(createBoardDto: CreateBoardDto, user: User) {
+    const { title, description, status } = createBoardDto
+    const board = this.boardRepository.create({ title, description, status, user })
+    await this.boardRepository.save(board)
+    return board
   }
 
   async updateBoard(id: string, createBoardDto: CreateBoardDto) {
@@ -30,8 +37,8 @@ export class BoardsService {
     return this.getBoard(id)
   }
 
-  async deleteBoard(id: string) {
-    return this.boardRepository.delete(id)
+  async deleteBoard(id: string, user: User) {
+    return this.boardRepository.delete({ id, user })
   }
 
   // async likePost(id: number) {
